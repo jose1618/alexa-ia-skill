@@ -1,0 +1,5 @@
+flask
+ask-sdk-core
+ask-sdk-flask-adapter
+anthropic
+gunicorn
