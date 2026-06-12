@@ -88,7 +88,9 @@ sb.add_request_handler(PreguntaAlIntentHandler())
 sb.add_request_handler(CancelStopHandler())
 
 skill = sb.create()
-
+@app.route("/version", methods=["GET"])
+def version():
+    return jsonify({"asistente": NOMBRE_ASISTENTE, "version": "2.0"})
 @app.route("/", methods=["POST"])
 def index():
     body = request.json
