@@ -1,17 +1,19 @@
-from flask import Flask
+import json
+import logging
+from flask import Flask, request, jsonify
 from ask_sdk_core.skill_builder import SkillBuilder
-from ask_sdk_flask_adapter import Skill
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.handler_input import HandlerInput
-import ask_sdk_core.utils.request_type_utils as is_request
+from ask_sdk_core.utils import is_request_type, is_intent_name
 import anthropic
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 sb = SkillBuilder()
 
 class LaunchRequestHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_request.is_launch_request(handler_input)
+        return is_request_type("LaunchRequest")(handler_input)
     def handle(self, handler_input):
         return (handler_input.response_builder
                 .speak("Hola, soy tu asistente IA. ¿En qué puedo ayudarte?")
@@ -20,7 +22,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
 class PreguntaAlIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_request.is_intent_request(handler_input, "PreguntaAlIntent")
+        return is_intent_name("PreguntaAlIntent")(handler_input)
     def handle(self, handler_input):
         frase = handler_input.request_envelope.request.intent.slots["frase"].value
         client = anthropic.Anthropic()
@@ -37,8 +39,8 @@ class PreguntaAlIntentHandler(AbstractRequestHandler):
 
 class CancelStopHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return (is_request.is_intent_request(handler_input, "AMAZON.CancelIntent") or
-                is_request.is_intent_request(handler_input, "AMAZON.StopIntent"))
+        return (is_intent_name("AMAZON.CancelIntent")(handler_input) or
+                is_intent_name("AMAZON.StopIntent")(handler_input))
     def handle(self, handler_input):
         return (handler_input.response_builder
                 .speak("¡Hasta luego!")
@@ -48,8 +50,18 @@ sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(PreguntaAlIntentHandler())
 sb.add_request_handler(CancelStopHandler())
 
-skill_adapter = Skill(skill=sb.create(), verify_signature=True, verify_timestamp=True)
-app.add_url_rule("/", "index", skill_adapter.dispatch_request, methods=["POST"])
+skill = sb.create()
+
+@app.route("/", methods=["POST"])
+def index():
+    body = request.json
+    response = skill.invoke(
+        request_envelope=skill.serializer.deserialize(
+            json.dumps(body), __import__('ask_sdk_model').RequestEnvelope
+        ),
+        context=None
+    )
+    return jsonify(skill.serializer.serialize(response.response))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
