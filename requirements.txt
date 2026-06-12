@@ -1,6 +1,6 @@
 flask==2.3.3
 ask-sdk-core==1.19.0
-flask-ask-sdk==1.0.0
+ask-sdk-model==1.89.0
 anthropic
 gunicorn
 werkzeug==2.3.7
