@@ -82,20 +82,15 @@ def version():
 
 @app.route("/", methods=["POST"])
 def index():
+  @app.route("/", methods=["POST"])
+def index():
     try:
-        body = request.json
-        response = skill.invoke(
-            request_envelope=skill.serializer.deserialize(
-                json.dumps(body), __import__('ask_sdk_model').RequestEnvelope
-            ),
-            context=None
-        )
-        return jsonify(skill.serializer.serialize(response.response))
+        body = request.data.decode("utf-8")
+        from ask_sdk_model.services.message_serializer import MessageSerializer
+        serializer = MessageSerializer()
+        request_envelope = serializer.deserialize(body, __import__('ask_sdk_model').RequestEnvelope)
+        response = skill.invoke(request_envelope=request_envelope, context=None)
+        return jsonify(serializer.serialize(response.response))
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
- import os
-port = int(os.environ.get("PORT", 10000))
-app.run(host="0.0.0.0", port=port)
