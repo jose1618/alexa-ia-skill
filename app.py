@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from flask import Flask, request, jsonify
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
@@ -82,8 +83,6 @@ def version():
 
 @app.route("/", methods=["POST"])
 def index():
-  @app.route("/", methods=["POST"])
-def index():
     try:
         body = request.data.decode("utf-8")
         from ask_sdk_model.services.message_serializer import MessageSerializer
@@ -94,3 +93,7 @@ def index():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
